@@ -30,10 +30,17 @@ jobs:
           mvn clean package
           mvn test
 
-      # Step 4: Deploy to Azure Server
+      # Step 4: Configure SSH and Deploy
       - name: Deploy to Azure Server
         run: |
-          scp target/CI-CD-test-0.0.1-SNAPSHOT.jar  azureuser@172.166.180.49:/home/azureuser/demo.jar
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          ssh-keyscan -H 172.166.180.49 >> ~/.ssh/known_hosts
+          
+          scp target/CI-CD-test-0.0.1-SNAPSHOT.jar azureuser@172.166.180.49:/home/azureuser/demo.jar
+          
           ssh azureuser@172.166.180.49 'nohup java -jar /home/azureuser/demo.jar > /home/azureuser/demo.log 2>&1 &'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
